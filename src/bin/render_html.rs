@@ -11,7 +11,7 @@ fn main() {
     let stats = get_stats(&constituencies.constituencies);
 
     let mut sorted_stats: Vec<(&PartyName, &i32)> = stats.iter().collect();
-    sorted_stats.sort_by(|a, b| b.1.cmp(a.1));
+    sorted_stats.sort_by(|a, b| (b.1, b.0).cmp(&(a.1, a.0)));
 
     for (party, count) in &sorted_stats {
         println!("{:?}: {}", party, count);

@@ -20,7 +20,7 @@ pub struct Party {
     pub probability: f64,
 }
 
-#[derive(Eq, Serialize, Deserialize, PartialEq, Hash, Clone, Debug)]
+#[derive(Eq, Ord, PartialOrd, Serialize, Deserialize, PartialEq, Hash, Clone, Debug)]
 pub enum PartyName {
     Conservatives,
     Labour,
