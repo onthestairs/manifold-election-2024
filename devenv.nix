@@ -15,8 +15,7 @@
     pkgs.proj
     pkgs.just
     # pkgs.rust-analyzer
-    pkgs.wget
-    pkgs.unzip
+    pkgs.netlify-cli
   ];
 
   # https://devenv.sh/scripts/
