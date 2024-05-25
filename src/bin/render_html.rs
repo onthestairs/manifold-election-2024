@@ -34,6 +34,8 @@ fn render_html(status: &Status, stats: &Vec<(&PartyName, &i32)>) -> String {
                 .title(|title| title.text("Manifold UK General Election 2024"))
         })
         .body(|body| {
+            body.style("margin: 0 auto; padding: 0 20px; max-width: 820px;");
+
             let mut heading = html::content::Heading1::builder();
             heading.text("Manifold UK General Election 2024");
             body.push(heading.build());
@@ -62,6 +64,10 @@ fn render_html(status: &Status, stats: &Vec<(&PartyName, &i32)>) -> String {
 
 fn make_constituency_tables(constituencies: &[ConstituencyStatus]) -> html::text_content::Division {
     let mut division = html::text_content::Division::builder();
+    division.style(
+        "display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;",
+    );
+
     let mut sorted_constituencies = constituencies.iter().collect::<Vec<&ConstituencyStatus>>();
     sorted_constituencies.sort_by(|a, b| a.constituency.cmp(&b.constituency));
     for constituency in &sorted_constituencies {
