@@ -34,6 +34,7 @@ pub enum PartyName {
     Alliance,
     Independent,
     WorkersPartyOfBritain,
+    Reform,
     Other,
     Unparsed(String),
 }
@@ -53,6 +54,7 @@ impl PartyName {
             PartyName::Alliance => "Alliance".to_string(),
             PartyName::Independent => "Independent".to_string(),
             PartyName::WorkersPartyOfBritain => "Workers Party of Britain".to_string(),
+            PartyName::Reform => "Reform".to_string(),
             PartyName::Other => "Other".to_string(),
             PartyName::Unparsed(name) => name.to_string(),
         }
@@ -74,6 +76,7 @@ impl PartyName {
             PartyName::Alliance => "".to_string(),
             PartyName::Independent => "".to_string(),
             PartyName::WorkersPartyOfBritain => "⚙️".to_string(),
+            PartyName::Reform => "".to_string(),
             PartyName::Other => "".to_string(),
             PartyName::Unparsed(_) => "".to_string(),
         }
