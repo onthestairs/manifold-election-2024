@@ -16,6 +16,7 @@
     pkgs.just
     # pkgs.rust-analyzer
     pkgs.netlify-cli
+    pkgs.cargo-watch
   ];
 
   # https://devenv.sh/scripts/
