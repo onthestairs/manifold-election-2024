@@ -40,11 +40,54 @@ fn render_html(
             let stats_table = make_stats_table(stats);
             body.push(stats_table);
 
+            body.push(html::text_content::ThematicBreak::builder().build());
+
+            let constituency_tables = make_constituency_tables(constituencies);
+            body.push(constituency_tables);
+
             return body;
         })
         .build();
 
     return tree.to_string();
+}
+
+fn make_constituency_tables(constituencies: &[ConstituencyStatus]) -> html::text_content::Division {
+    let mut division = html::text_content::Division::builder();
+    let mut sorted_constituencies = constituencies.iter().collect::<Vec<&ConstituencyStatus>>();
+    sorted_constituencies.sort_by(|a, b| a.constituency.cmp(&b.constituency));
+    for constituency in &sorted_constituencies {
+        let table = make_constituency_table(constituency);
+        division.push(table);
+    }
+    return division.build();
+}
+
+fn make_constituency_table(constituency: &ConstituencyStatus) -> html::text_content::Division {
+    let mut division = html::text_content::Division::builder();
+
+    let mut heading = html::content::Heading2::builder();
+    heading.text(constituency.constituency.clone());
+    division.push(heading.build());
+
+    let mut table = html::tables::Table::builder();
+    let mut reverse_sorted_parties = constituency.parties.iter().collect::<Vec<&Party>>();
+    reverse_sorted_parties.sort_by(|a, b| b.probability.partial_cmp(&a.probability).unwrap());
+    for party in &reverse_sorted_parties {
+        let row = html::tables::TableRow::builder()
+            .table_cell(|cell| {
+                cell.text(party.name.to_string());
+                return cell;
+            })
+            .table_cell(|cell| {
+                cell.text(format!("{:.2}%", party.probability * 100.0));
+                return cell;
+            })
+            .build();
+        table.push(row);
+    }
+    division.push(table.build());
+    return division.build();
 }
 
 fn make_stats_table(stats: &Vec<(&PartyName, &i32)>) -> html::tables::Table {
