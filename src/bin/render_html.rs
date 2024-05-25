@@ -27,6 +27,10 @@ fn render_html(status: &Status, stats: &Vec<(&PartyName, &i32)>) -> String {
         .lang("en")
         .head(|head| {
             head.meta(|meta| meta.charset("utf-8"))
+                .meta(|meta| {
+                    meta.name("viewport")
+                        .content("width=device-width, initial-scale=1")
+                })
                 .title(|title| title.text("Manifold UK General Election 2024"))
         })
         .body(|body| {
