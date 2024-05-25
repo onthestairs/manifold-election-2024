@@ -91,6 +91,13 @@ fn make_constituency_table(constituency: &ConstituencyStatus) -> html::text_cont
         table.push(row);
     }
     division.push(table.build());
+
+    let mut link = html::inline_text::Anchor::builder();
+    link.href(constituency.manifold_url.clone());
+    link.target("_blank");
+    link.text("See market on Manifold");
+    division.push(link.build());
+
     return division.build();
 }
 
