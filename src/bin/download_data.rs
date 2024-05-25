@@ -1,18 +1,8 @@
-use std::collections::HashMap;
-
+use election_2024::{ConstituencyStatus, Party, PartyName};
 use serde::Deserialize;
 
-struct ConstituencyStatus {
-    constituency: String,
-    parties: Vec<Party>,
-}
-
-struct Party {
-    name: PartyName,
-    probability: f64,
-}
-
 fn main() {
+    // the group which contains all the markets
     let group_id = "f763184a-51f4-4de2-a9df-d290134e6298";
     let markets = get_all_markets_in_group(&group_id);
 
@@ -39,30 +29,9 @@ fn main() {
         constituencies.push(constituency);
     }
 
-    let stats = get_stats(&constituencies);
-
-    let mut sorted_stats: Vec<(&PartyName, &i32)> = stats.iter().collect();
-    sorted_stats.sort_by(|a, b| b.1.cmp(a.1));
-
-    for (party, count) in sorted_stats {
-        println!("{:?}: {}", party, count);
-    }
-}
-
-#[derive(Eq, PartialEq, Hash, Clone, Debug)]
-enum PartyName {
-    Conservatives,
-    Labour,
-    LiberalDemocrats,
-    SNP,
-    Green,
-    PlaidCymru,
-    DUP,
-    SinnFein,
-    SDLP,
-    Alliance,
-    Independent,
-    Other,
+    // output the stats
+    let output = serde_json::to_string(&constituencies).unwrap();
+    std::fs::write("out/constituencies.json", output).unwrap();
 }
 
 fn parse_party_name(party_name: &str) -> PartyName {
@@ -83,32 +52,11 @@ fn parse_party_name(party_name: &str) -> PartyName {
         "Green" => PartyName::Green,
         "Independent: Jeremy Corbyn" => PartyName::Independent,
         "Independent: Sir Lindsay Hoyle" => PartyName::Independent,
+        "Independent: Andrew Bridgen" => PartyName::Independent,
+        "Workers Party of Britain" => PartyName::WorkersPartyOfBritain,
         "Other" => PartyName::Other,
-        _ => panic!("Unknown party name: {}", trimmed_name),
+        _ => PartyName::Unparsed(trimmed_name.to_string()),
     };
-}
-
-fn get_stats(constituencies: &Vec<ConstituencyStatus>) -> HashMap<PartyName, i32> {
-    // figure out the most likely party in each constituency
-
-    let mut party_counts: HashMap<PartyName, i32> = HashMap::new();
-    for constituency in constituencies {
-        let winner = constituency
-            .parties
-            .iter()
-            .max_by(|a, b| a.probability.partial_cmp(&b.probability).unwrap())
-            .unwrap();
-
-        if party_counts.contains_key(&winner.name) {
-            party_counts.insert(
-                winner.name.clone(),
-                party_counts.get(&winner.name).unwrap() + 1,
-            );
-        } else {
-            party_counts.insert(winner.name.clone(), 1);
-        }
-    }
-    return party_counts;
 }
 
 fn extract_constituency_name(market_question: &str) -> String {
