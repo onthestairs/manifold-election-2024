@@ -58,3 +58,24 @@ impl PartyName {
         }
     }
 }
+
+impl PartyName {
+    pub fn to_emoji(&self) -> String {
+        match self {
+            PartyName::Conservatives => "🌳".to_string(),
+            PartyName::Labour => "🌹".to_string(),
+            PartyName::LiberalDemocrats => "🕊️".to_string(),
+            PartyName::SNP => "🎗️".to_string(),
+            PartyName::Green => "🌱".to_string(),
+            PartyName::PlaidCymru => "🌼".to_string(),
+            PartyName::DUP => "🦁".to_string(),
+            PartyName::SinnFein => "🇮🇪".to_string(),
+            PartyName::SDLP => "".to_string(),
+            PartyName::Alliance => "".to_string(),
+            PartyName::Independent => "".to_string(),
+            PartyName::WorkersPartyOfBritain => "⚙️".to_string(),
+            PartyName::Other => "".to_string(),
+            PartyName::Unparsed(_) => "".to_string(),
+        }
+    }
+}
