@@ -56,12 +56,17 @@ fn parse_party_name(party_name: &str) -> PartyName {
         "Alliance" => PartyName::Alliance,
         "Social Democratic and Labour Party" => PartyName::SDLP,
         "Green" => PartyName::Green,
-        "Independent: Jeremy Corbyn" => PartyName::Independent,
-        "Independent: Sir Lindsay Hoyle" => PartyName::Independent,
-        "Independent: Andrew Bridgen" => PartyName::Independent,
         "Workers Party of Britain" => PartyName::WorkersPartyOfBritain,
+        "Workers Party" => PartyName::WorkersPartyOfBritain,
+        "Reform" => PartyName::Reform,
         "Other" => PartyName::Other,
-        _ => PartyName::Unparsed(trimmed_name.to_string()),
+        _ => {
+            if trimmed_name.starts_with("Independent") {
+                PartyName::Independent
+            } else {
+                PartyName::Unparsed(trimmed_name.to_string())
+            }
+        }
     };
 }
 
