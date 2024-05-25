@@ -1,6 +1,7 @@
 #![recursion_limit = "512"]
 
-use std::collections::HashMap;
+use rand::seq::SliceRandom;
+use std::collections::{HashMap, HashSet};
 
 use election_2024::{ConstituencyStatus, Party, PartyName, Status};
 
@@ -10,19 +11,22 @@ fn main() {
 
     let stats = get_stats(&constituencies.constituencies);
 
+    let monte_carlo_results = run_monte_carlo(&constituencies.constituencies);
+    let summaries = get_montecarlo_summary(&monte_carlo_results);
+
     let mut sorted_stats: Vec<(&PartyName, &i32)> = stats.iter().collect();
     sorted_stats.sort_by(|a, b| (b.1, b.0).cmp(&(a.1, a.0)));
 
-    for (party, count) in &sorted_stats {
-        println!("{:?}: {}", party, count);
-    }
-
-    let html = render_html(&constituencies, &sorted_stats);
+    let html = render_html(&constituencies, &summaries, &sorted_stats);
     // save to file
     std::fs::write("out/index.html", html).unwrap();
 }
 
-fn render_html(status: &Status, stats: &Vec<(&PartyName, &i32)>) -> String {
+fn render_html(
+    status: &Status,
+    summaries: &Vec<MonteCarloSummary>,
+    stats: &Vec<(&PartyName, &i32)>,
+) -> String {
     let tree = html::root::Html::builder()
         .lang("en")
         .head(|head| {
@@ -46,6 +50,27 @@ fn render_html(status: &Status, stats: &Vec<(&PartyName, &i32)>) -> String {
                 status.fetched_at.format("%Y-%m-%d %H:%M:%S")
             ));
             body.push(fetched_at.build());
+
+            body.push(html::text_content::ThematicBreak::builder().build());
+
+            let mut summary_heading = html::content::Heading2::builder();
+            summary_heading.text("Monte Carlo simulation results");
+            body.push(summary_heading.build());
+            let mut summary_paragraph = html::text_content::Paragraph::builder();
+            summary_paragraph.text(
+                "The following table shows the most likely number of seats each party is \
+                expected to win in the upcoming general election. The numbers are based on a \
+                Monte Carlo simulation of 10,000 runs.",
+            );
+            body.push(summary_paragraph.build());
+            let summary_table = make_summary_table(&summaries);
+            body.push(summary_table);
+
+            body.push(html::text_content::ThematicBreak::builder().build());
+
+            let mut summary_heading = html::content::Heading2::builder();
+            summary_heading.text("Seat favourites");
+            body.push(summary_heading.build());
 
             let stats_table = make_stats_table(stats);
             body.push(stats_table);
@@ -113,6 +138,43 @@ fn make_constituency_table(constituency: &ConstituencyStatus) -> html::text_cont
     return division.build();
 }
 
+fn make_summary_table(summaries: &Vec<MonteCarloSummary>) -> html::tables::Table {
+    let mut table = html::tables::Table::builder();
+    table.table_row(|row| {
+        row.table_header(|header| {
+            header.text("Party");
+            return header;
+        });
+        row.table_header(|header| {
+            header.text("Mode seats [5th - 95th percentile]");
+            return header;
+        });
+        return row;
+    });
+
+    for summary in summaries.iter() {
+        let row = html::tables::TableRow::builder()
+            .table_cell(|data| {
+                data.text(summary.party.to_string());
+                data.text(" ");
+                data.text(summary.party.to_emoji());
+                return data;
+            })
+            .table_cell(|data| {
+                data.text(summary.mode.to_string());
+                data.text(" [");
+                data.text(summary.lower_5th.to_string());
+                data.text(" - ");
+                data.text(summary.upper_95th.to_string());
+                data.text("]");
+                return data;
+            })
+            .build();
+        table.push(row);
+    }
+    return table.build();
+}
+
 fn make_stats_table(stats: &Vec<(&PartyName, &i32)>) -> html::tables::Table {
     let mut table = html::tables::Table::builder();
     table.table_row(|row| {
@@ -121,7 +183,7 @@ fn make_stats_table(stats: &Vec<(&PartyName, &i32)>) -> html::tables::Table {
             return header;
         });
         row.table_header(|header| {
-            header.text("Projected seats");
+            header.text("Number of seats favourite to win");
             return header;
         });
         return row;
@@ -143,6 +205,109 @@ fn make_stats_table(stats: &Vec<(&PartyName, &i32)>) -> html::tables::Table {
         table.push(row);
     }
     return table.build();
+}
+
+fn run_monte_carlo(constituencies: &Vec<ConstituencyStatus>) -> Vec<HashMap<PartyName, i32>> {
+    // run a monte carlo simulation
+    // for each constituency, pick a party based on the probabilities
+    // and increment the count for that party
+    // do this a few thousand times
+    // and then output the results
+    let mut rng = rand::thread_rng();
+
+    let simulations = 10_000;
+    let mut simulation_results: Vec<HashMap<PartyName, i32>> = Vec::new();
+    for _ in 0..simulations {
+        let mut party_counts: HashMap<PartyName, i32> = HashMap::new();
+        for constituency in constituencies {
+            // randomly pick a party based on the probabilities
+            let winner = constituency
+                .parties
+                .choose_weighted(&mut rng, |party| party.probability)
+                .unwrap();
+
+            if party_counts.contains_key(&winner.name) {
+                party_counts.insert(
+                    winner.name.clone(),
+                    party_counts.get(&winner.name).unwrap() + 1,
+                );
+            } else {
+                party_counts.insert(winner.name.clone(), 1);
+            }
+        }
+        simulation_results.push(party_counts);
+    }
+
+    return simulation_results;
+}
+
+struct MonteCarloSummary {
+    party: PartyName,
+    seats: Vec<i32>,
+    mode: i32,
+    median: i32,
+    lower_5th: i32,
+    upper_95th: i32,
+}
+
+fn get_montecarlo_summary(
+    simulation_results: &Vec<HashMap<PartyName, i32>>,
+) -> Vec<MonteCarloSummary> {
+    let parties: HashSet<PartyName> = simulation_results
+        .iter()
+        .flat_map(|party_counts| party_counts.keys())
+        .cloned()
+        .collect();
+    let mut summaries: Vec<MonteCarloSummary> = Vec::new();
+    for party in parties {
+        let mut seats: Vec<i32> = simulation_results
+            .iter()
+            .map(|party_counts| *party_counts.get(&party).unwrap_or(&0))
+            .collect();
+        seats.sort();
+        let mode = mode(&seats);
+        let lower_5th = seats[(0.05 * seats.len() as f64) as usize];
+        let upper_95th = seats[(0.95 * seats.len() as f64) as usize];
+        let median = median(&seats);
+        let summary = MonteCarloSummary {
+            party: party.clone(),
+            seats,
+            mode,
+            median,
+            lower_5th,
+            upper_95th,
+        };
+        summaries.push(summary);
+    }
+
+    // sort by the mode
+    summaries.sort_by(|a, b| b.mode.cmp(&a.mode));
+
+    return summaries;
+}
+
+fn median(xs: &[i32]) -> i32 {
+    return xs[xs.len() / 2];
+}
+
+fn mode(xs: &[i32]) -> i32 {
+    let mut counts: HashMap<i32, i32> = HashMap::new();
+    for x in xs {
+        if counts.contains_key(x) {
+            counts.insert(*x, counts.get(x).unwrap() + 1);
+        } else {
+            counts.insert(*x, 1);
+        }
+    }
+    let mut max_count = 0;
+    let mut mode = 0;
+    for (x, count) in counts {
+        if count > max_count {
+            max_count = count;
+            mode = x;
+        }
+    }
+    return mode;
 }
 
 fn get_stats(constituencies: &Vec<ConstituencyStatus>) -> HashMap<PartyName, i32> {
