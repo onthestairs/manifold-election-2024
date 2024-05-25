@@ -59,6 +59,7 @@ fn parse_party_name(party_name: &str) -> PartyName {
         "Workers Party of Britain" => PartyName::WorkersPartyOfBritain,
         "Workers Party" => PartyName::WorkersPartyOfBritain,
         "Reform" => PartyName::Reform,
+        "Reform UK" => PartyName::Reform,
         "Other" => PartyName::Other,
         _ => {
             if trimmed_name.starts_with("Independent") {
