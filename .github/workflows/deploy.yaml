@@ -1,0 +1,31 @@
+name: Fetch data and deploy
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Run every 10 minutes
+
+jobs:
+  fetch-data-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        
+    - name: Download data
+      run: cargo run --release --bin download_data
+      
+    - name: Render HTML
+      run: cargo run --release --bin render_html
+
+    - name: 'Deploy to Netlify'
+      uses: jsmrcaga/action-netlify-deploy@v2.0.0
+      with:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_DEPLOY_TO_PROD: true
+          build_directory: ./out/
