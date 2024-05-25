@@ -85,6 +85,8 @@ fn make_constituency_table(constituency: &ConstituencyStatus) -> html::text_cont
         let row = html::tables::TableRow::builder()
             .table_cell(|cell| {
                 cell.text(party.name.to_string());
+                cell.text(" ");
+                cell.text(party.name.to_emoji());
                 return cell;
             })
             .table_cell(|cell| {
@@ -123,6 +125,8 @@ fn make_stats_table(stats: &Vec<(&PartyName, &i32)>) -> html::tables::Table {
         let row = html::tables::TableRow::builder()
             .table_cell(|data| {
                 data.text(party.to_string());
+                data.text(" ");
+                data.text(party.to_emoji());
                 return data;
             })
             .table_cell(|data| {
