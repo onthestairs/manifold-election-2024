@@ -144,7 +144,7 @@ fn make_summary_table(summaries: &Vec<MonteCarloSummary>) -> html::tables::Table
             return header;
         });
         row.table_header(|header| {
-            header.text("Mode seats [5th - 95th percentile]");
+            header.text("Median seats [5th - 95th percentile]");
             return header;
         });
         return row;
@@ -159,7 +159,7 @@ fn make_summary_table(summaries: &Vec<MonteCarloSummary>) -> html::tables::Table
                 return data;
             })
             .table_cell(|data| {
-                data.text(summary.mode.to_string());
+                data.text(summary.median.to_string());
                 data.text(" [");
                 data.text(summary.lower_5th.to_string());
                 data.text(" - ");
@@ -279,7 +279,7 @@ fn get_montecarlo_summary(
     }
 
     // sort by the mode
-    summaries.sort_by(|a, b| b.mode.cmp(&a.mode));
+    summaries.sort_by(|a, b| b.median.cmp(&a.median));
 
     return summaries;
 }
