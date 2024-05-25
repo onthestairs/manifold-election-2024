@@ -16,6 +16,9 @@ jobs:
       with:
         toolchain: stable
 
+    - name: Install Netlify
+      run: npm install netlify-cli@17.10.1 -g
+
     - name: Make output dir
       run: mkdir out
         
@@ -25,10 +28,11 @@ jobs:
     - name: Render HTML
       run: cargo run --release --bin render_html
 
-    - name: 'Deploy to Netlify'
-      uses: jsmrcaga/action-netlify-deploy@v2.0.0
-      with:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-          NETLIFY_DEPLOY_TO_PROD: true
-          build_directory: ./out/
+    - name: Deploy to Netlify
+      id: netlify_deploy
+      run: |
+          netlify deploy \
+            --dir out \
+            --site ${{ secrets.NETLIFY_SITE_ID }} \
+            --auth ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
