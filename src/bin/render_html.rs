@@ -33,8 +33,13 @@ fn render_html(
                 .title(|title| title.text("Manifold UK General Election 2024"))
         })
         .body(|body| {
+            let mut heading = html::content::Heading1::builder();
+            heading.text("Manifold UK General Election 2024");
+            body.push(heading.build());
+
             let stats_table = make_stats_table(stats);
             body.push(stats_table);
+
             return body;
         })
         .build();
