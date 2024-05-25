@@ -5,6 +5,8 @@ use std::collections::{HashMap, HashSet};
 
 use election_2024::{ConstituencyStatus, Party, PartyName, Status};
 
+const NUMBER_OF_SIMULATIONS: usize = 100_000;
+
 fn main() {
     let input = std::fs::read("out/constituencies.json").unwrap();
     let constituencies: Status = serde_json::from_slice(&input).unwrap();
@@ -58,7 +60,7 @@ fn render_html(
             body.push(summary_heading.build());
             let mut summary_paragraph = html::text_content::Paragraph::builder();
             summary_paragraph.text(
-                "The following table shows the result of a Monte Carlo simulation. A simulated election is run 10,000 times. For each constituency, a party is returned randomly based on the implied probabilities of the market. The median is the middle number of seats won by that party across all the simulations.",
+                format!("The following table shows the result of a Monte Carlo simulation. A simulated election is run {} times. For each constituency, a party is returned randomly based on the implied probabilities of the market. The median is the middle number of seats won by that party across all the simulations.", NUMBER_OF_SIMULATIONS),
             );
             body.push(summary_paragraph.build());
             let summary_table = make_summary_table(&summaries);
@@ -213,9 +215,8 @@ fn run_monte_carlo(constituencies: &Vec<ConstituencyStatus>) -> Vec<HashMap<Part
     // and then output the results
     let mut rng = rand::thread_rng();
 
-    let simulations = 10_000;
     let mut simulation_results: Vec<HashMap<PartyName, i32>> = Vec::new();
-    for _ in 0..simulations {
+    for _ in 0..NUMBER_OF_SIMULATIONS {
         let mut party_counts: HashMap<PartyName, i32> = HashMap::new();
         for constituency in constituencies {
             // randomly pick a party based on the probabilities
