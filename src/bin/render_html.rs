@@ -2,13 +2,13 @@
 
 use std::collections::HashMap;
 
-use election_2024::{ConstituencyStatus, Party, PartyName};
+use election_2024::{ConstituencyStatus, Party, PartyName, Status};
 
 fn main() {
     let input = std::fs::read("out/constituencies.json").unwrap();
-    let constituencies = serde_json::from_slice(&input).unwrap();
+    let constituencies: Status = serde_json::from_slice(&input).unwrap();
 
-    let stats = get_stats(&constituencies);
+    let stats = get_stats(&constituencies.constituencies);
 
     let mut sorted_stats: Vec<(&PartyName, &i32)> = stats.iter().collect();
     sorted_stats.sort_by(|a, b| b.1.cmp(a.1));
@@ -22,10 +22,7 @@ fn main() {
     std::fs::write("out/index.html", html).unwrap();
 }
 
-fn render_html(
-    constituencies: &Vec<ConstituencyStatus>,
-    stats: &Vec<(&PartyName, &i32)>,
-) -> String {
+fn render_html(status: &Status, stats: &Vec<(&PartyName, &i32)>) -> String {
     let tree = html::root::Html::builder()
         .lang("en")
         .head(|head| {
@@ -37,12 +34,19 @@ fn render_html(
             heading.text("Manifold UK General Election 2024");
             body.push(heading.build());
 
+            let mut fetched_at = html::text_content::Paragraph::builder();
+            fetched_at.text(format!(
+                "Data fetched at {} UTC",
+                status.fetched_at.format("%Y-%m-%d %H:%M:%S")
+            ));
+            body.push(fetched_at.build());
+
             let stats_table = make_stats_table(stats);
             body.push(stats_table);
 
             body.push(html::text_content::ThematicBreak::builder().build());
 
-            let constituency_tables = make_constituency_tables(constituencies);
+            let constituency_tables = make_constituency_tables(&status.constituencies);
             body.push(constituency_tables);
 
             return body;

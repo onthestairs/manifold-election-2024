@@ -1,9 +1,17 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Status {
+    pub fetched_at: DateTime<Utc>,
+    pub constituencies: Vec<ConstituencyStatus>,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ConstituencyStatus {
     pub constituency: String,
     pub parties: Vec<Party>,
+    pub manifold_url: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

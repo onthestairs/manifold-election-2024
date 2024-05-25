@@ -1,4 +1,4 @@
-use election_2024::{ConstituencyStatus, Party, PartyName};
+use election_2024::{ConstituencyStatus, Party, PartyName, Status};
 use serde::Deserialize;
 
 fn main() {
@@ -30,8 +30,13 @@ fn main() {
         constituencies.push(constituency);
     }
 
+    let status = Status {
+        fetched_at: chrono::Utc::now(),
+        constituencies: constituencies,
+    };
+
     // output the stats
-    let output = serde_json::to_string(&constituencies).unwrap();
+    let output = serde_json::to_string(&status).unwrap();
     std::fs::write("out/constituencies.json", output).unwrap();
 }
 
