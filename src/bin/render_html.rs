@@ -58,9 +58,7 @@ fn render_html(
             body.push(summary_heading.build());
             let mut summary_paragraph = html::text_content::Paragraph::builder();
             summary_paragraph.text(
-                "The following table shows the most likely number of seats each party is \
-                expected to win in the upcoming general election. The numbers are based on a \
-                Monte Carlo simulation of 10,000 runs.",
+                "The following table shows the result of a Monte Carlo simulation. A simulated election is run 10,000 times. For each constituency, a party is return based on the implied probabilities of the market. The mode is the most common number of seats won by that party across all the simulations.",
             );
             body.push(summary_paragraph.build());
             let summary_table = make_summary_table(&summaries);
