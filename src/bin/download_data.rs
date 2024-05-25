@@ -1,4 +1,5 @@
 use election_2024::{ConstituencyStatus, Party, PartyName, Status};
+use rayon::prelude::*;
 use serde::Deserialize;
 
 fn main() {
@@ -6,29 +7,30 @@ fn main() {
     let group_id = "f763184a-51f4-4de2-a9df-d290134e6298";
     let markets = get_all_markets_in_group(&group_id);
 
-    let mut constituencies: Vec<ConstituencyStatus> = Vec::new();
+    let constituencies = markets
+        .par_iter()
+        .map(|market| {
+            let market_detailed = get_market_answer_probabiities(&market.id);
+            let constituency_name = extract_constituency_name(&market.question);
 
-    for market in markets.iter().take(5000) {
-        let market_detailed = get_market_answer_probabiities(&market.id);
-        let constituency_name = extract_constituency_name(&market.question);
+            let mut parties: Vec<Party> = Vec::new();
+            for answer in &market_detailed.answers {
+                let party = Party {
+                    name: parse_party_name(&answer.text),
+                    probability: answer.probability,
+                };
+                parties.push(party);
+            }
 
-        let mut parties: Vec<Party> = Vec::new();
-        for answer in &market_detailed.answers {
-            let party = Party {
-                name: parse_party_name(&answer.text),
-                probability: answer.probability,
+            let constituency = ConstituencyStatus {
+                constituency: constituency_name,
+                parties: parties,
+                manifold_url: market_detailed.url.clone(),
             };
-            parties.push(party);
-        }
 
-        let constituency = ConstituencyStatus {
-            constituency: constituency_name,
-            parties: parties,
-            manifold_url: market_detailed.url.clone(),
-        };
-
-        constituencies.push(constituency);
-    }
+            return constituency;
+        })
+        .collect();
 
     let status = Status {
         fetched_at: chrono::Utc::now(),
