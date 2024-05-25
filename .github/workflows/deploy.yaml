@@ -19,6 +19,17 @@ jobs:
     - name: Install Netlify
       run: npm install netlify-cli@17.10.1 -g
 
+    - name: Cache cargo
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
     - name: Make output dir
       run: mkdir out
         
