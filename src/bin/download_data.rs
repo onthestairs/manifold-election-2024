@@ -24,6 +24,7 @@ fn main() {
         let constituency = ConstituencyStatus {
             constituency: constituency_name,
             parties: parties,
+            manifold_url: market_detailed.url.clone(),
         };
 
         constituencies.push(constituency);
@@ -92,6 +93,7 @@ fn get_all_markets_in_group(group_id: &str) -> Vec<Market> {
 #[derive(Debug, Deserialize)]
 struct MarketDetailed {
     answers: Vec<MarketAnswer>,
+    url: String,
 }
 
 #[derive(Debug, Deserialize)]
