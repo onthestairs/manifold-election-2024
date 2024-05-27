@@ -60,7 +60,7 @@ fn render_html(
             body.push(summary_heading.build());
             let mut summary_paragraph = html::text_content::Paragraph::builder();
             summary_paragraph.text(
-                format!("The following table shows the result of a Monte Carlo simulation. A simulated election is run {} times. For each constituency, a party is returned randomly based on the implied probabilities of the market. The median is the middle number of seats won by that party across all the simulations.", NUMBER_OF_SIMULATIONS),
+                format!("The following table shows the result of a Monte Carlo simulation. A simulated election is run {} times. For each constituency, a party is returned randomly based on the implied probabilities of the market. The median is the middle number of seats won by that party across all the simulations. The majority percent shows how many times in the simulation the given party wins a majority (>325 seats). ", NUMBER_OF_SIMULATIONS),
             );
             body.push(summary_paragraph.build());
             let summary_table = make_summary_table(&summaries);
@@ -146,7 +146,13 @@ fn make_summary_table(summaries: &Vec<MonteCarloSummary>) -> html::tables::Table
             return header;
         });
         row.table_header(|header| {
-            header.text("Median seats [5th - 95th percentile]");
+            header.text("Median seats");
+            header.push(html::inline_text::LineBreak::builder().build());
+            header.text("[5th - 95th percentile]");
+            return header;
+        });
+        row.table_header(|header| {
+            header.text("Majority percentage");
             return header;
         });
         return row;
@@ -167,6 +173,10 @@ fn make_summary_table(summaries: &Vec<MonteCarloSummary>) -> html::tables::Table
                 data.text(" - ");
                 data.text(summary.upper_95th.to_string());
                 data.text("]");
+                return data;
+            })
+            .table_cell(|data| {
+                data.text(format!("{:.2}%", summary.majority_percentage * 100.0));
                 return data;
             })
             .build();
@@ -247,6 +257,7 @@ struct MonteCarloSummary {
     median: i32,
     lower_5th: i32,
     upper_95th: i32,
+    majority_percentage: f64,
 }
 
 fn get_montecarlo_summary(
@@ -268,6 +279,8 @@ fn get_montecarlo_summary(
         let lower_5th = seats[(0.05 * seats.len() as f64) as usize];
         let upper_95th = seats[(0.95 * seats.len() as f64) as usize];
         let median = median(&seats);
+        let majority_percentage =
+            seats.iter().filter(|&x| *x > 325).count() as f64 / seats.len() as f64;
         let summary = MonteCarloSummary {
             party: party.clone(),
             seats,
@@ -275,6 +288,7 @@ fn get_montecarlo_summary(
             median,
             lower_5th,
             upper_95th,
+            majority_percentage,
         };
         summaries.push(summary);
     }
