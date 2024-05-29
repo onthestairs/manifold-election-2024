@@ -100,6 +100,40 @@ fn make_constituency_tables(constituencies: &[ConstituencyStatus]) -> html::text
         division.push(table);
     }
     return division.build();
+
+
+struct ConstituencyStats {
+    labour_probability: Option<f64>,
+    conservative_probability: Option<f64>,
+    other_probability: Option<f64>,
+    favourite_lead: Option<f64>,
+}
+
+fn make_constituency_stats(parties: &Vec<&Party>) -> ConstituencyStats {
+    let labour_probability = parties
+        .iter()
+        .find(|party| party.name == PartyName::Labour)
+        .map(|party| party.probability);
+    let conservative_probability = parties
+        .iter()
+        .find(|party| party.name == PartyName::Conservatives)
+        .map(|party| party.probability);
+    let other_probability = parties
+        .iter()
+        .find(|party| party.name == PartyName::Other)
+        .map(|party| party.probability);
+    let favourite_percentage = parties.iter().nth(0).map(|party| party.probability);
+    let second_favourite_percentage = parties.iter().nth(1).map(|party| party.probability);
+    let favourite_lead = favourite_percentage
+        .zip(second_favourite_percentage)
+        .map(|(favourite, second_favourite)| favourite - second_favourite);
+
+    return ConstituencyStats {
+        labour_probability,
+        conservative_probability,
+        other_probability,
+        favourite_lead,
+    };
 }
 
 fn make_constituency_table(constituency: &ConstituencyStatus) -> html::text_content::Division {
