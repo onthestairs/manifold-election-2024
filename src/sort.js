@@ -49,6 +49,8 @@ const sortConsituenciesBy = (key, sortIsNumeric, asc) => {
       if (sortIsNumeric) {
         aData = parseFloat(aData);
         bData = parseFloat(bData);
+        if (isNaN(aData)) aData = -1;
+        if (isNaN(bData)) bData = -1;
         return aData - bData;
       } else {
         return aData.localeCompare(bData);
@@ -61,6 +63,8 @@ const sortConsituenciesBy = (key, sortIsNumeric, asc) => {
       if (sortIsNumeric) {
         aData = parseFloat(aData);
         bData = parseFloat(bData);
+        if (isNaN(aData)) aData = -1;
+        if (isNaN(bData)) bData = -1;
         return bData - aData;
       } else {
         return bData.localeCompare(aData);
