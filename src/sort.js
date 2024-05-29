@@ -13,7 +13,7 @@ for (const sorter of sorters) {
   sorter.addEventListener("click", (e) => {
     const key = e.target.dataset.sort;
     const asc = e.target.dataset.asc === "true";
-    const sortIsNumeric = e.target.dataset.numeric === "true";
+    const sortIsNumeric = e.target.dataset.sortIsNumeric === "true";
 
     sortConsituenciesBy(key, sortIsNumeric, asc);
 
@@ -24,6 +24,16 @@ for (const sorter of sorters) {
 
     // set the asc attribute to the opposite of the current one
     e.target.dataset.asc = !asc;
+
+    // remove the arrow from all the sorters
+    const sortArrows = document.querySelectorAll(".sortArrow");
+    for (const arrow of sortArrows) {
+      arrow.remove();
+    }
+
+    // add a little ascii arrow to show the sort direction
+    const arrow = asc ? "↑" : "↓";
+    e.target.innerHTML = `${e.target.innerHTML} <span class="sortArrow">${arrow}</span>`;
   });
 }
 
@@ -39,8 +49,10 @@ const sortConsituenciesBy = (key, sortIsNumeric, asc) => {
       if (sortIsNumeric) {
         aData = parseFloat(aData);
         bData = parseFloat(bData);
+        return aData - bData;
+      } else {
+        return aData.localeCompare(bData);
       }
-      return aData - bData;
     });
   } else {
     constituenciesArray.sort((a, b) => {
@@ -49,8 +61,10 @@ const sortConsituenciesBy = (key, sortIsNumeric, asc) => {
       if (sortIsNumeric) {
         aData = parseFloat(aData);
         bData = parseFloat(bData);
+        return bData - aData;
+      } else {
+        return bData.localeCompare(aData);
       }
-      return bData - aData;
     });
   }
 
