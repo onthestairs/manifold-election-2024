@@ -22,6 +22,7 @@ fn main() {
     let html = render_html(&constituencies, &summaries, &sorted_stats);
     // save to file
     std::fs::write("out/index.html", html).unwrap();
+    std::fs::copy("src/sort.js", "out/sort.js").unwrap();
 }
 
 fn render_html(
@@ -80,6 +81,12 @@ fn render_html(
             let constituency_tables = make_constituency_tables(&status.constituencies);
             body.push(constituency_tables);
 
+            body.script(|script| {
+                 script.src("sort.js");
+                script.type_("text/javascript");
+                return script;
+            });
+
             return body;
         })
         .build();
@@ -88,7 +95,58 @@ fn render_html(
 }
 
 fn make_constituency_tables(constituencies: &[ConstituencyStatus]) -> html::text_content::Division {
+    let mut outer_division = html::text_content::Division::builder();
+    let mut heading = html::content::Heading2::builder();
+    heading.text("Constituencies");
+    outer_division.push(heading.build());
+
+    let mut sorters = html::text_content::Division::builder();
+    sorters.push(
+        html::text_content::Paragraph::builder()
+            .text("Sort by: ")
+            .build(),
+    );
+    let mut sorters_list = html::text_content::UnorderedList::builder();
+
+    sorters_list.push(
+        html::text_content::ListItem::builder()
+            .data("sort", "name")
+            .data("sort-is-numberic", "false")
+            .text("Sort by name")
+            .build(),
+    );
+    sorters_list.push(
+        html::text_content::ListItem::builder()
+            .data("sort", "labourProbability")
+            .data("sort-is-numberic", "true")
+            .text("Sort by Labour probability")
+            .build(),
+    );
+    sorters_list.push(
+        html::text_content::ListItem::builder()
+            .data("sort", "conservativeProbability")
+            .data("sort-is-numberic", "true")
+            .text("Sort by Conservative probability")
+            .build(),
+    );
+    sorters_list.push(
+        html::text_content::ListItem::builder()
+            .data("sort", "otherProbability")
+            .data("sort-is-numberic", "true")
+            .text("Sort by Other probability")
+            .build(),
+    );
+    sorters_list.push(
+        html::text_content::ListItem::builder()
+            .data("sort", "favouriteLead")
+            .data("sort-is-numberic", "true")
+            .text("Sort by favourite lead")
+            .build(),
+    );
+    outer_division.push(sorters_list.build());
+
     let mut division = html::text_content::Division::builder();
+    division.id("constituencies");
     division.style(
         "display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;",
     );
@@ -99,8 +157,11 @@ fn make_constituency_tables(constituencies: &[ConstituencyStatus]) -> html::text
         let table = make_constituency_table(constituency);
         division.push(table);
     }
-    return division.build();
 
+    outer_division.push(division.build());
+
+    return outer_division.build();
+}
 
 struct ConstituencyStats {
     labour_probability: Option<f64>,
@@ -139,13 +200,54 @@ fn make_constituency_stats(parties: &Vec<&Party>) -> ConstituencyStats {
 fn make_constituency_table(constituency: &ConstituencyStatus) -> html::text_content::Division {
     let mut division = html::text_content::Division::builder();
 
+    let mut reverse_sorted_parties = constituency.parties.iter().collect::<Vec<&Party>>();
+    reverse_sorted_parties.sort_by(|a, b| b.probability.partial_cmp(&a.probability).unwrap());
+
+    let stats = make_constituency_stats(&reverse_sorted_parties);
+
+    division.data("name", constituency.constituency.clone());
+    division.data(
+        "labour-probability",
+        stats
+            .labour_probability
+            .map(|p| p.to_string())
+            .unwrap_or("".to_string()),
+    );
+    division.data(
+        "conservative-probability",
+        stats
+            .conservative_probability
+            .map(|p| p.to_string())
+            .unwrap_or("".to_string()),
+    );
+    division.data(
+        "other-probability",
+        stats
+            .other_probability
+            .map(|p| p.to_string())
+            .unwrap_or("".to_string()),
+    );
+    division.data(
+        "favourite-lead",
+        stats
+            .favourite_lead
+            .map(|p| p.to_string())
+            .unwrap_or("".to_string()),
+    );
+
+    let labour_probability = constituency
+        .parties
+        .iter()
+        .find(|party| party.name == PartyName::Labour)
+        .map(|party| party.probability)
+        .unwrap_or(0.0);
+    division.data("labour-percent", labour_probability.to_string());
+
     let mut heading = html::content::Heading2::builder();
     heading.text(constituency.constituency.clone());
     division.push(heading.build());
 
     let mut table = html::tables::Table::builder();
-    let mut reverse_sorted_parties = constituency.parties.iter().collect::<Vec<&Party>>();
-    reverse_sorted_parties.sort_by(|a, b| b.probability.partial_cmp(&a.probability).unwrap());
     for party in &reverse_sorted_parties {
         let row = html::tables::TableRow::builder()
             .table_cell(|cell| {
