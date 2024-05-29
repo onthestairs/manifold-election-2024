@@ -108,62 +108,38 @@ fn make_constituency_tables(constituencies: &[ConstituencyStatus]) -> html::text
     );
     let mut sorters_list = html::text_content::UnorderedList::builder();
 
-    sorters_list.push(
-        html::text_content::ListItem::builder()
-            .data("sort", "name")
-            .data("sort-is-numeric", "false")
-            .text("Name")
-            .build(),
-    );
-    sorters_list.push(
-        html::text_content::ListItem::builder()
-            .data("sort", "labourProbability")
-            .data("sort-is-numeric", "true")
-            .text("Labour probability")
-            .build(),
-    );
-    sorters_list.push(
-        html::text_content::ListItem::builder()
-            .data("sort", "conservativeProbability")
-            .data("sort-is-numeric", "true")
-            .text("Conservative probability")
-            .build(),
-    );
-    sorters_list.push(
-        html::text_content::ListItem::builder()
-            .data("sort", "libDemProbability")
-            .data("sort-is-numeric", "true")
-            .text("Lib Dem probability")
-            .build(),
-    );
-    sorters_list.push(
-        html::text_content::ListItem::builder()
-            .data("sort", "greenProbability")
-            .data("sort-is-numeric", "true")
-            .text("Green probability")
-            .build(),
-    );
-    sorters_list.push(
-        html::text_content::ListItem::builder()
-            .data("sort", "reformProbability")
-            .data("sort-is-numeric", "true")
-            .text("Reform probability")
-            .build(),
-    );
-    sorters_list.push(
-        html::text_content::ListItem::builder()
-            .data("sort", "otherProbability")
-            .data("sort-is-numeric", "true")
-            .text("Other probability")
-            .build(),
-    );
-    sorters_list.push(
-        html::text_content::ListItem::builder()
-            .data("sort", "favouriteLead")
-            .data("sort-is-numeric", "true")
-            .text("Favourite margin")
-            .build(),
-    );
+    let make_sorter = |title: &str, key: &str, is_numeric: bool| {
+        let anchor = html::inline_text::Anchor::builder()
+            .style_attr("cursor: pointer;")
+            .data("sort", key.to_string())
+            .data("sort-is-numeric", is_numeric.to_string())
+            .text(title.to_string())
+            .build();
+        let list_item = html::text_content::ListItem::builder().push(anchor).build();
+        return list_item;
+    };
+
+    sorters_list.push(make_sorter("Name", "name", false));
+    sorters_list.push(make_sorter("Labour probability", "labourProbability", true));
+    sorters_list.push(make_sorter(
+        "Conservative probability",
+        "conservativeProbability",
+        true,
+    ));
+    sorters_list.push(make_sorter(
+        "Lib Dem probability",
+        "libDemProbability",
+        true,
+    ));
+    sorters_list.push(make_sorter("Green probability", "greenProbability", true));
+    sorters_list.push(make_sorter("Reform probability", "reformProbability", true));
+    sorters_list.push(make_sorter("Other probability", "otherProbability", true));
+    sorters_list.push(make_sorter("Favourite margin", "favouriteLead", true));
+    sorters_list.push(make_sorter(
+        "Third place probability",
+        "thirdPlaceProbability",
+        true,
+    ));
     sorters.push(sorters_list.build());
     outer_division.push(sorters.build());
 
@@ -193,6 +169,7 @@ struct ConstituencyStats {
     reform_probability: Option<f64>,
     other_probability: Option<f64>,
     favourite_lead: Option<f64>,
+    third_place_probability: Option<f64>,
 }
 
 fn make_constituency_stats(parties: &Vec<&Party>) -> ConstituencyStats {
@@ -213,6 +190,7 @@ fn make_constituency_stats(parties: &Vec<&Party>) -> ConstituencyStats {
     let favourite_lead = favourite_percentage
         .zip(second_favourite_percentage)
         .map(|(favourite, second_favourite)| favourite - second_favourite);
+    let third_place_probability = parties.iter().nth(2).map(|party| party.probability);
 
     return ConstituencyStats {
         labour_probability,
@@ -222,6 +200,7 @@ fn make_constituency_stats(parties: &Vec<&Party>) -> ConstituencyStats {
         reform_probability,
         other_probability,
         favourite_lead,
+        third_place_probability,
     };
 }
 
@@ -280,6 +259,13 @@ fn make_constituency_table(constituency: &ConstituencyStatus) -> html::text_cont
         "favourite-lead",
         stats
             .favourite_lead
+            .map(|p| p.to_string())
+            .unwrap_or("".to_string()),
+    );
+    division.data(
+        "third-place-probability",
+        stats
+            .third_place_probability
             .map(|p| p.to_string())
             .unwrap_or("".to_string()),
     );
