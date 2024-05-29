@@ -7,7 +7,19 @@ fn main() {
     let group_id = "f763184a-51f4-4de2-a9df-d290134e6298";
     let markets = get_all_markets_in_group(&group_id);
 
-    let constituencies = markets
+    let good_markets = markets
+        .iter()
+        .filter(|market| {
+            // this was a test market we don't want to include
+            if market.id == "u9745NJc14O05boS3wCl" {
+                return false;
+            } else {
+                return true;
+            }
+        })
+        .collect::<Vec<&Market>>();
+
+    let constituencies = good_markets
         .par_iter()
         .map(|market| {
             let market_detailed = get_market_answer_probabiities(&market.id);
