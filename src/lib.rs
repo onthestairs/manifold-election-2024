@@ -82,3 +82,66 @@ impl PartyName {
         }
     }
 }
+
+///////// Aggregate Stats
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AggregatedStats {
+    pub fetched_at: DateTime<Utc>,
+    pub constituencies: Vec<ConstituencyAggregated>,
+    pub winning_constituencies: Vec<(PartyName, i32)>,
+    pub monte_carlo_summary: Vec<MonteCarloSummarySimple>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ConstituencyStats {
+    pub labour_probability: Option<f64>,
+    pub conservative_probability: Option<f64>,
+    pub lib_dem_probability: Option<f64>,
+    pub green_probability: Option<f64>,
+    pub reform_probability: Option<f64>,
+    pub other_probability: Option<f64>,
+    pub favourite_lead: Option<f64>,
+    pub third_place_probability: Option<f64>,
+}
+
+pub const NUMBER_OF_SIMULATIONS: usize = 100_000;
+
+pub struct MonteCarloSummary {
+    pub party: PartyName,
+    pub seats: Vec<i32>,
+    pub mode: i32,
+    pub median: i32,
+    pub lower_5th: i32,
+    pub upper_95th: i32,
+    pub majority_percentage: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MonteCarloSummarySimple {
+    pub party: PartyName,
+    pub mode: i32,
+    pub median: i32,
+    pub lower_5th: i32,
+    pub upper_95th: i32,
+    pub majority_percentage: f64,
+}
+
+pub fn to_simple_summary(summary: &MonteCarloSummary) -> MonteCarloSummarySimple {
+    return MonteCarloSummarySimple {
+        party: summary.party.clone(),
+        mode: summary.mode,
+        median: summary.median,
+        lower_5th: summary.lower_5th,
+        upper_95th: summary.upper_95th,
+        majority_percentage: summary.majority_percentage,
+    };
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ConstituencyAggregated {
+    pub constituency: String,
+    pub parties: Vec<Party>,
+    pub manifold_url: String,
+    pub stats: ConstituencyStats,
+}
