@@ -33,12 +33,26 @@ fn render_html(constituencies: &AggregatedStats) -> String {
             heading.text("Manifold UK General Election 2024");
             body.push(heading.build());
 
+            let mut intro_paragraph = html::text_content::Paragraph::builder();
+            intro_paragraph.text("This page is a dashboard of data concerning the 2024 UK General Election based on data from the prediction market site ");
+            intro_paragraph.push(html::inline_text::Anchor::builder().href("https://manifold.markets/home").text("Manifold").build());
+            intro_paragraph.text(". It shows the current probability of each party in each constituency and various aggregations.");
+            body.push(intro_paragraph.build());
+
             let mut fetched_at = html::text_content::Paragraph::builder();
             fetched_at.text(format!(
                 "Data fetched at {} UTC",
                 constituencies.fetched_at.format("%Y-%m-%d %H:%M:%S")
             ));
             body.push(fetched_at.build());
+
+            let mut github_link = html::text_content::Paragraph::builder();
+            github_link.text(format!(
+                "Open source at "
+            ));
+            github_link.push(html::inline_text::Anchor::builder().href("https://github.com/onthestairs/manifold-election-2024").text("Github").build());
+            github_link.text(".");
+            body.push(github_link.build());
 
             body.push(html::text_content::ThematicBreak::builder().build());
 
